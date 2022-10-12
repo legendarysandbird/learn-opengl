@@ -5,6 +5,8 @@
 #include "includes/glm/glm.hpp"
 #include <GLFW/glfw3.h>
 
+enum Direction { Up, Down, Left, Right };
+
 class Camera {
   glm::vec3 cameraPos;
   glm::vec3 cameraFront;
@@ -21,7 +23,7 @@ public:
   void Start(double xPos, double yPos);
   void RotateCamera(double xpos, double ypos);
   void Zoom(double xoffset, double yoffset);
-  void MoveCamera(GLFWwindow *window, float deltaTime);
+  void MoveCamera(Direction direction, float deltaTime);
   glm::mat4 GetView();
   glm::mat4 GetProjection();
 };

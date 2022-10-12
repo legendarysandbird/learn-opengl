@@ -34,7 +34,20 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
   cam.Zoom(xoffset, yoffset);
 }
 
-void processInput(GLFWwindow *window) { cam.MoveCamera(window, deltaTime); }
+void processInput(GLFWwindow *window) {
+  if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+    cam.MoveCamera(Direction::Up, deltaTime);
+  }
+  if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+    cam.MoveCamera(Direction::Down, deltaTime);
+  }
+  if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+    cam.MoveCamera(Direction::Left, deltaTime);
+  }
+  if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+    cam.MoveCamera(Direction::Right, deltaTime);
+  }
+}
 
 int main() {
   glfwInit();

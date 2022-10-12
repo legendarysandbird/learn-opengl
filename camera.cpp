@@ -2,11 +2,8 @@
 #include "includes/glm/glm.hpp"
 #include "includes/glm/gtc/matrix_transform.hpp"
 #include <GLFW/glfw3.h>
-#include <iostream>
 
 const float sensitivity = 0.05f;
-
-using namespace std;
 
 Camera::Camera() {
   cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
@@ -50,7 +47,6 @@ void Camera::RotateCamera(double xpos, double ypos) {
   direction.y = sin(glm::radians(pitch));
   direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
   cameraFront = glm::normalize(direction);
-  cout << "(" << cameraFront.x << "," << cameraFront.y << ","<< cameraFront.z << ")" << endl;
 }
 
 void Camera::Zoom(double xoffset, double yoffset) {
@@ -63,20 +59,20 @@ void Camera::Zoom(double xoffset, double yoffset) {
   }
 }
 
-void Camera::MoveCamera(GLFWwindow *window, float deltaTime) {
+void Camera::MoveCamera(Direction direction, float deltaTime) {
   glm::vec3 movementDir = glm::vec3(cameraFront.x, 0.0f, cameraFront.z);
   movementDir = glm::normalize(movementDir) * deltaTime;
 
-  if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+  if (direction == Direction::Up) {
     cameraPos += cameraSpeed * movementDir;
   }
-  if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+  if (direction == Direction::Down) {
     cameraPos -= cameraSpeed * movementDir;
   }
-  if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+  if (direction == Direction::Left) {
     cameraPos -= cameraSpeed * glm::cross(movementDir, cameraUp);
   }
-  if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+  if (direction == Direction::Right) {
     cameraPos += cameraSpeed * glm::cross(movementDir, cameraUp);
   }
 }
