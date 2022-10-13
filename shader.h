@@ -2,6 +2,7 @@
 #define SHADER_H
 
 #include "includes/glad/glad.h" // include glad to get all the required OpenGL headers
+#include "includes/glm/detail/type_vec.hpp"
 #include "includes/glm/glm.hpp"
 
 #include <fstream>
@@ -23,6 +24,7 @@ public:
   void setInt(const std::string &name, int value) const;
   void setFloat(const std::string &name, float value) const;
   void setMat4(const std::string &name, glm::mat4 value) const;
+  void setVec3(const std::string &name, float r, float g, float b) const;
 };
 
 #endif
