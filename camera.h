@@ -26,6 +26,7 @@ public:
   void MoveCamera(Direction direction, float deltaTime);
   glm::mat4 GetView();
   glm::mat4 GetProjection();
+  glm::vec3 GetPos();
 };
 
 #endif
