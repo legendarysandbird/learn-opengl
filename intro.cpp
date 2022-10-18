@@ -165,8 +165,11 @@ int main() {
   Shader lightShader("shader.vs", "lightShader.fs");
   Shader ourShader("shader.vs", "shader.fs");
   ourShader.use();
-  ourShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
-  ourShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+  ourShader.setVec3("material.ambient", 1.0f, 0.5f, 0.31f);
+  ourShader.setVec3("material.diffuse", 1.0f, 0.5f, 0.31f);
+  ourShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
+  ourShader.setFloat("material.shininess", 32.0f);
+  ourShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
 
   glEnable(GL_DEPTH_TEST);
 
@@ -192,6 +195,11 @@ int main() {
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, texture2);
 
+    glm::vec3 lightColor(sin(glfwGetTime() * 2.0f), sin(glfwGetTime() * 0.7f),
+                         sin(glfwGetTime() * 1.3f));
+    glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f);
+    glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f);
+
     glm::vec3 offset(2 * cos(glfwGetTime()), 0.0f, 2 * sin(glfwGetTime()));
     lightPos = cubePos + offset;
 
@@ -202,7 +210,9 @@ int main() {
     ourShader.setMat4("view", view);
     ourShader.setMat4("projection", projection);
     ourShader.setVec3("viewPos", cam.GetPos());
-    ourShader.setVec3("lightPos", lightPos);
+    ourShader.setVec3("light.position", lightPos);
+    ourShader.setVec3("light.ambient", ambientColor);
+    ourShader.setVec3("light.diffuse", diffuseColor);
 
     glBindVertexArray(VAO);
 
@@ -219,6 +229,7 @@ int main() {
     model = glm::translate(model, lightPos);
     model = glm::scale(model, glm::vec3(0.2f));
     lightShader.setMat4("model", model);
+    lightShader.setVec3("color", lightColor);
     glBindVertexArray(lightVAO);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
