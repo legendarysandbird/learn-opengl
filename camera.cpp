@@ -91,3 +91,5 @@ glm::mat4 Camera::GetProjection() {
 }
 
 glm::vec3 Camera::GetPos() { return cameraPos; }
+
+glm::vec3 Camera::GetFront() { return cameraFront; }

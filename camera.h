@@ -27,6 +27,7 @@ public:
   glm::mat4 GetView();
   glm::mat4 GetProjection();
   glm::vec3 GetPos();
+  glm::vec3 GetFront();
 };
 
 #endif
