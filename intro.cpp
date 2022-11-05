@@ -36,7 +36,7 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
 }
 
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
-  cam.Zoom(xoffset, yoffset);
+  cam.Zoom(yoffset);
 }
 
 void processInput(GLFWwindow *window) {

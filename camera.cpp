@@ -49,7 +49,7 @@ void Camera::RotateCamera(double xpos, double ypos) {
   cameraFront = glm::normalize(direction);
 }
 
-void Camera::Zoom(double xoffset, double yoffset) {
+void Camera::Zoom(double yoffset) {
   fov -= (float)yoffset;
   if (fov < 1.0f) {
     fov = 1.0f;

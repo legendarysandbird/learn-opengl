@@ -1,3 +1,6 @@
+depth: glad.o depth.o shader.o stb_image.o camera.o mesh.o model.o
+	g++ shader.o stb_image.o glad.o depth.o camera.o mesh.o model.o -o depth -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl -lassimp
+
 intro: glad.o intro.o shader.o stb_image.o camera.o mesh.o model.o
 	g++ shader.o stb_image.o glad.o intro.o camera.o mesh.o model.o -o intro -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl -lassimp
 
@@ -6,6 +9,9 @@ glad.o: glad.c
 
 intro.o: intro.cpp
 	g++ -c intro.cpp 
+
+depth.o: depth.cpp
+	g++ -c depth.cpp
 
 shader.o: shader.cpp
 	g++ -c shader.cpp
@@ -23,4 +29,4 @@ model.o: model.cpp
 	g++ -c model.cpp
 
 clean:
-	rm -f glad.o shader.o intro.o camera.o mesh.o model.o intro
+	rm -f glad.o shader.o intro.o camera.o mesh.o model.o depth.o intro

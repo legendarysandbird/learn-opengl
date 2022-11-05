@@ -22,7 +22,7 @@ public:
   Camera();
   void Start(double xPos, double yPos);
   void RotateCamera(double xpos, double ypos);
-  void Zoom(double xoffset, double yoffset);
+  void Zoom(double yoffset);
   void MoveCamera(Direction direction, float deltaTime);
   glm::mat4 GetView();
   glm::mat4 GetProjection();
