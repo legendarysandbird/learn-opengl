@@ -25,8 +25,8 @@ void DrawTwoScaledUpContainers(unsigned int cubeVAO, unsigned int cubeTexture,
                                Shader shader);
 
 // settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+unsigned int SCR_WIDTH = 1600;
+unsigned int SCR_HEIGHT = 1200;
 
 // camera
 Camera camera;
@@ -87,6 +87,7 @@ int main() {
   // -------------------------
   Shader shader("depth_testing.vs", "depth_testing.fs");
   Shader borderShader("depth_testing.vs", "shaderColor.fs");
+  Shader screenShader("bufferShader.vs", "bufferShader.fs");
 
   // set up vertex data (and buffer(s)) and configure vertex attributes
   // ------------------------------------------------------------------
@@ -145,6 +146,12 @@ int main() {
       5.0f, -0.5f, 5.0f,  2.0f,  0.0f,  -5.0f, -0.5f, -5.0f,
       0.0f, 2.0f,  5.0f,  -0.5f, -5.0f, 2.0f,  2.0f};
 
+  float screenCubeVertices[] = {
+      -1.0f, -1.0f, 0.0f, 0.0f, 1.0f, -1.0f, 1.0f, 0.0f,
+      -1.0f, 1.0f,  0.0f, 1.0f, 1.0f, 1.0f,  1.0f, 1.0f,
+      -1.0f, 1.0f,  0.0f, 1.0f, 1.0f, -1.0f, 1.0f, 0.0f,
+  };
+
   vector<glm::vec3> windows;
   windows.push_back(glm::vec3(-1.5f, 0.0f, -0.48f));
   windows.push_back(glm::vec3(1.5f, 0.0f, 0.51f));
@@ -197,9 +204,58 @@ int main() {
                         (void *)(3 * sizeof(float)));
   glBindVertexArray(0);
 
+  // screen VAO
+  unsigned int screenVAO, screenVBO;
+  glGenVertexArrays(1, &screenVAO);
+  glGenBuffers(1, &screenVBO);
+  glBindVertexArray(screenVAO);
+  glBindBuffer(GL_ARRAY_BUFFER, screenVBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(screenCubeVertices), &screenCubeVertices,
+               GL_STATIC_DRAW);
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)0);
+  glEnableVertexAttribArray(1);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
+                        (void *)(2 * sizeof(float)));
+  glBindVertexArray(0);
+
+  unsigned int framebuffer;
+  glGenFramebuffers(1, &framebuffer);
+  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
+  // generate texture
+  unsigned int textureColorbuffer;
+  glGenTextures(1, &textureColorbuffer);
+  glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB,
+               GL_UNSIGNED_BYTE, NULL);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  // attach it to currently bound framebuffer object
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+                         textureColorbuffer, 0);
+
+  unsigned int rbo;
+  glGenRenderbuffers(1, &rbo);
+  glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH,
+                        SCR_HEIGHT);
+  glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
+                            GL_RENDERBUFFER, rbo);
+
+  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    std::cout << "ERROR::FRAMEBUFFER::Framebuffer is not complete!"
+              << std::endl;
+  }
+
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
   // load textures
   // -------------
-  unsigned int cubeTexture = loadTexture("assets/marble.jpg");
+  unsigned int cubeTexture = loadTexture("assets/container.jpg");
   unsigned int floorTexture = loadTexture("assets/metal.png");
   unsigned int windowTexture =
       loadTexture("assets/blending_transparent_window.png");
@@ -208,6 +264,9 @@ int main() {
   // --------------------
   shader.use();
   shader.setInt("texture1", 0);
+
+  screenShader.use();
+  screenShader.setInt("screenTexture", 0);
 
   // render loop
   // -----------
@@ -221,6 +280,10 @@ int main() {
     // input
     // -----
     processInput(window);
+
+    glViewport(0, 0, 1600, 1200);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+    glEnable(GL_DEPTH_TEST);
 
     // render
     // ------
@@ -266,6 +329,20 @@ int main() {
 
     glEnable(GL_CULL_FACE);
 
+    glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+
+    // Second pass
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glDisable(GL_DEPTH_TEST);
+
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    screenShader.use();
+    glBindVertexArray(screenVAO);
+    glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
     // glfw: swap buffers and poll IO events (keys pressed/released, mouse
     // moved etc.)
     // -------------------------------------------------------------------------------
@@ -307,7 +384,8 @@ void processInput(GLFWwindow *window) {
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
   // make sure the viewport matches the new window dimensions; note that width
   // and height will be significantly larger than specified on retina displays.
-  glViewport(0, 0, width, height);
+  SCR_WIDTH = width;
+  SCR_HEIGHT = height;
 }
 
 // glfw: whenever the mouse moves, this callback is called
