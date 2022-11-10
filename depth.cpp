@@ -91,6 +91,24 @@ int main() {
   Shader skyboxShader("skyboxShader.vs", "skyboxShader.fs");
   Shader reflectionShader("reflection.vs", "reflection.fs");
 
+  unsigned int uniformBlockIndexShader =
+      glGetUniformBlockIndex(shader.ID, "Matrices");
+  unsigned int uniformBlockIndexReflection =
+      glGetUniformBlockIndex(reflectionShader.ID, "Matrices");
+
+  glUniformBlockBinding(shader.ID, uniformBlockIndexShader, 0);
+  glUniformBlockBinding(reflectionShader.ID, uniformBlockIndexReflection, 0);
+
+  unsigned int uboMatrices;
+  glGenBuffers(1, &uboMatrices);
+
+  glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+  glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), NULL, GL_STATIC_DRAW);
+  glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+  glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboMatrices, 0,
+                    2 * sizeof(glm::mat4));
+
   // set up vertex data (and buffer(s)) and configure vertex attributes
   // ------------------------------------------------------------------
   float cubeVertices[] = {
@@ -319,6 +337,13 @@ int main() {
   screenShader.use();
   screenShader.setInt("screenTexture", 0);
 
+  glm::mat4 projection = camera.GetProjection();
+
+  glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+  glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4),
+                  glm::value_ptr(projection));
+  glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
   // render loop
   // -----------
   while (!glfwWindowShouldClose(window)) {
@@ -342,17 +367,16 @@ int main() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glm::mat4 view = camera.GetView();
-    glm::mat4 projection = camera.GetProjection();
+    glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4),
+                    glm::value_ptr(view));
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     shader.use();
-    shader.setMat4("view", view);
-    shader.setMat4("projection", projection);
 
     DrawFloor(planeVAO, floorTexture, shader);
 
     reflectionShader.use();
-    reflectionShader.setMat4("view", view);
-    reflectionShader.setMat4("projection", projection);
     reflectionShader.setVec3("cameraPos", camera.GetPos());
     DrawTwoContainers(cubeVAO, cubemapTexture, reflectionShader);
 
