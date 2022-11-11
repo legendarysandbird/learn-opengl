@@ -90,6 +90,7 @@ int main() {
   Shader screenShader("bufferShader.vs", "bufferShader.fs");
   Shader skyboxShader("skyboxShader.vs", "skyboxShader.fs");
   Shader reflectionShader("reflection.vs", "reflection.fs");
+  Shader pointsShader("points.vs", "points.fs");
 
   unsigned int uniformBlockIndexShader =
       glGetUniformBlockIndex(shader.ID, "Matrices");
@@ -177,6 +178,8 @@ int main() {
 
       -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, -1.0f,
       1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f};
+
+  float points[] = {-0.5f, 0.5f, 0.5f, 0.5f, 0.5f, -0.5f, -0.5f, -0.5f};
 
   float windowVertices[] = {
       // positions          // texture Coords
@@ -282,6 +285,17 @@ int main() {
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
   glBindVertexArray(0);
 
+  // points VAO
+  unsigned int pointsVAO, pointsVBO;
+  glGenVertexArrays(1, &pointsVAO);
+  glGenBuffers(1, &pointsVBO);
+  glBindVertexArray(pointsVAO);
+  glBindBuffer(GL_ARRAY_BUFFER, pointsVBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *)0);
+  glBindVertexArray(0);
+
   unsigned int framebuffer;
   glGenFramebuffers(1, &framebuffer);
   glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
@@ -374,11 +388,11 @@ int main() {
 
     shader.use();
 
-    DrawFloor(planeVAO, floorTexture, shader);
+    // DrawFloor(planeVAO, floorTexture, shader);
 
     reflectionShader.use();
     reflectionShader.setVec3("cameraPos", camera.GetPos());
-    DrawTwoContainers(cubeVAO, cubemapTexture, reflectionShader);
+    // DrawTwoContainers(cubeVAO, cubemapTexture, reflectionShader);
 
     // Draw skybox
     glm::mat4 skyboxView = glm::mat4(glm::mat3(view));
@@ -389,7 +403,7 @@ int main() {
 
     glBindVertexArray(skyboxVAO);
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+    // glDrawArrays(GL_TRIANGLES, 0, 36);
 
     // Draw windows
     glm::mat4 model;
@@ -412,7 +426,7 @@ int main() {
       model = glm::mat4(1.0f);
       model = glm::translate(model, it->second);
       shader.setMat4("model", model);
-      glDrawArrays(GL_TRIANGLES, 0, 6);
+      // glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 
     glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
@@ -421,13 +435,17 @@ int main() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glDisable(GL_DEPTH_TEST);
 
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    // glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     screenShader.use();
     glBindVertexArray(screenVAO);
     glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    // glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    pointsShader.use();
+    glBindVertexArray(pointsVAO);
+    glDrawArrays(GL_POINTS, 0, 4);
 
     // glfw: swap buffers and poll IO events (keys pressed/released, mouse
     // moved etc.)

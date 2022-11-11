@@ -1,3 +1,6 @@
+points: glad.o points.o shader.o stb_image.o camera.o model.o mesh.o
+	g++ shader.o stb_image.o glad.o camera.o points.o mesh.o model.o -o points -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl -lassimp
+
 depth: glad.o depth.o shader.o stb_image.o camera.o mesh.o model.o
 	g++ shader.o stb_image.o glad.o depth.o camera.o mesh.o model.o -o depth -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl -lassimp
 
@@ -28,5 +31,8 @@ mesh.o: mesh.cpp
 model.o: model.cpp
 	g++ -c model.cpp
 
+points.o: points.cpp
+	g++ -c points.cpp
+
 clean:
-	rm -f glad.o shader.o intro.o camera.o mesh.o model.o depth.o intro
+	rm -f glad.o shader.o intro.o camera.o mesh.o model.o depth.o points.o intro
