@@ -79,8 +79,10 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir) {
   vec3 reflectDir = reflect(-lightDir, normal);
   float spec;
 
+  vec3 halfwayDir = normalize(lightDir + viewDir);
+
   if (dot(normal, reflectDir) > 0.0f) {
-    spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+    spec = pow(max(dot(normal, halfwayDir), 0.0), material.shininess);
   } else {
     spec = 0.0f;
   }
@@ -97,10 +99,12 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir) {
   vec3 lightDir = normalize(light.position - fragPos);
   float diff = max(dot(normal, lightDir), 0.0f);
 
+  vec3 halfwayDir = normalize(lightDir + viewDir);
+
   vec3 reflectDir = reflect(-lightDir, normal);
   float spec;
   if (dot(normal, reflectDir) > 0.0f) {
-    spec = pow(max(dot(viewDir, reflectDir), 0.0f), material.shininess);
+    spec = pow(max(dot(normal, halfwayDir), 0.0f), material.shininess);
   } else {
     spec = 0.0f;
   }
@@ -129,10 +133,12 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir) {
 
   float diff = max(dot(normal, lightDir), 0.0);
 
+  vec3 halfwayDir = normalize(lightDir + viewDir);
+
   vec3 reflectDir = reflect(-lightDir, normal);
   float spec;
   if (dot(normal, reflectDir) > 0.0f) {
-    spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+    spec = pow(max(dot(normal, halfwayDir), 0.0), material.shininess);
   } else {
     spec = 0.0f;
   }
