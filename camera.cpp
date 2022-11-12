@@ -86,7 +86,7 @@ glm::mat4 Camera::GetView() {
 glm::mat4 Camera::GetProjection() {
   glm::mat4 projection = glm::mat4(1.0f);
   projection =
-      glm::perspective(glm::radians(fov), 800.0f / 600.0f, 0.1f, 100.0f);
+      glm::perspective(glm::radians(fov), 800.0f / 600.0f, 0.1f, 1000.0f);
   return projection;
 }
 
