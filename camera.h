@@ -5,7 +5,7 @@
 #include "includes/glm/glm.hpp"
 #include <GLFW/glfw3.h>
 
-enum Direction { Up, Down, Left, Right };
+enum Direction { Forward, Back, Left, Right, Up, Down };
 
 class Camera {
   glm::vec3 cameraPos;

@@ -63,10 +63,10 @@ void Camera::MoveCamera(Direction direction, float deltaTime) {
   glm::vec3 movementDir = glm::vec3(cameraFront.x, 0.0f, cameraFront.z);
   movementDir = glm::normalize(movementDir) * deltaTime;
 
-  if (direction == Direction::Up) {
+  if (direction == Direction::Forward) {
     cameraPos += cameraSpeed * movementDir;
   }
-  if (direction == Direction::Down) {
+  if (direction == Direction::Back) {
     cameraPos -= cameraSpeed * movementDir;
   }
   if (direction == Direction::Left) {
@@ -74,6 +74,12 @@ void Camera::MoveCamera(Direction direction, float deltaTime) {
   }
   if (direction == Direction::Right) {
     cameraPos += cameraSpeed * glm::cross(movementDir, cameraUp);
+  }
+  if (direction == Direction::Up) {
+    cameraPos += cameraSpeed * cameraUp * deltaTime;
+  }
+  if (direction == Direction::Down) {
+    cameraPos -= cameraSpeed * cameraUp * deltaTime;
   }
 }
 
