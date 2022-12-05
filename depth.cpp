@@ -18,7 +18,6 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
 unsigned int loadTexture(const char *path);
-void DrawFloor(unsigned int planeVAO, unsigned int floorTexture, Shader shader);
 void renderQuad();
 
 // settings
@@ -79,47 +78,20 @@ int main() {
   // -------------------------
   Shader shader("depth_testing.vs", "depth_testing.fs");
 
-  float planeVertices[] = {
-      // positions            // normals         // texcoords
-      25.0f,  -0.5f, 25.0f,  0.0f, 1.0f, 0.0f, 25.0f, 0.0f,
-      -25.0f, -0.5f, 25.0f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f,
-      -25.0f, -0.5f, -25.0f, 0.0f, 1.0f, 0.0f, 0.0f,  25.0f,
-
-      25.0f,  -0.5f, 25.0f,  0.0f, 1.0f, 0.0f, 25.0f, 0.0f,
-      -25.0f, -0.5f, -25.0f, 0.0f, 1.0f, 0.0f, 0.0f,  25.0f,
-      25.0f,  -0.5f, -25.0f, 0.0f, 1.0f, 0.0f, 25.0f, 25.0f};
-
-  // plane VAO
-  unsigned int planeVAO, planeVBO;
-  glGenVertexArrays(1, &planeVAO);
-  glGenBuffers(1, &planeVBO);
-  glBindVertexArray(planeVAO);
-  glBindBuffer(GL_ARRAY_BUFFER, planeVBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(planeVertices), &planeVertices,
-               GL_STATIC_DRAW);
-  glEnableVertexAttribArray(0);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
-  glEnableVertexAttribArray(1);
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
-                        (void *)(3 * sizeof(float)));
-  glEnableVertexAttribArray(2);
-  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
-                        (void *)(6 * sizeof(float)));
-  glBindVertexArray(0);
-
   // load textures
   // -------------
-  unsigned int planeTexture = loadTexture("assets/brickwall.jpg");
-  unsigned int normalTexture = loadTexture("assets/brickwall_normal.jpg");
-  unsigned int floorTexture = loadTexture("assets/metal.png");
+  unsigned int diffuseTexture = loadTexture("assets/bricks2.jpg");
+  unsigned int normalTexture = loadTexture("assets/bricks2_normal.jpg");
+  unsigned int depthTexture = loadTexture("assets/bricks2_disp.jpg");
 
   // shader configuration
   // --------------------
   shader.use();
-  shader.setInt("texture1", 0);
+  shader.setInt("diffuseMap", 0);
   shader.setInt("normalMap", 1);
+  shader.setInt("depthMap", 2);
 
-  glm::vec3 lightPos(0.0, 0.0, 2.0);
+  glm::vec3 lightPos(0.5, 1.0, 0.3);
 
   // render loop
   // -----------
@@ -144,25 +116,28 @@ int main() {
     glm::mat4 projection = camera.GetProjection();
     glm::vec3 camPos = camera.GetPos();
 
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::rotate(model, (float)glfwGetTime() / 2.0f,
-                        glm::normalize(glm::vec3(1.0, 0.0, 1.0)));
-    shader.setMat4("model", model);
-
     shader.use();
-    shader.setMat4("projection", projection);
+
+    // glm::mat4 model = glm::mat4(1.0f);
+    // model = glm::rotate(model, (float)glfwGetTime() / 2.0f,
+    //                     glm::normalize(glm::vec3(1.0, 0.0, 1.0)));
+
+    glm::mat4 model = glm::mat4(1.0f);
+
+    shader.setMat4("model", model);
     shader.setMat4("view", view);
+    shader.setMat4("projection", projection);
     shader.setVec3("lightPos", lightPos);
     shader.setVec3("viewPos", camPos);
-    shader.setBool("hasNormal", true);
+    shader.setFloat("height_scale", 0.1);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, planeTexture);
+    glBindTexture(GL_TEXTURE_2D, diffuseTexture);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, normalTexture);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, depthTexture);
     renderQuad();
-
-    DrawFloor(planeVAO, floorTexture, shader);
 
     // glfw: swap buffers and poll IO events (keys pressed/released, mouse
     // moved etc.)
@@ -170,11 +145,6 @@ int main() {
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
-
-  // optional: de-allocate all resources once they've outlived their purpose:
-  // ------------------------------------------------------------------------
-  glDeleteVertexArrays(1, &planeVAO);
-  glDeleteBuffers(1, &planeVBO);
 
   glfwTerminate();
   return 0;
@@ -267,15 +237,6 @@ unsigned int loadTexture(char const *path) {
   }
 
   return textureID;
-}
-
-void DrawFloor(unsigned int planeVAO, unsigned int floorTexture,
-               Shader shader) {
-  glBindVertexArray(planeVAO);
-  glBindTexture(GL_TEXTURE_2D, floorTexture);
-  shader.setMat4("model", glm::mat4(1.0f));
-  shader.setBool("hasNormal", false);
-  glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
 unsigned int quadVAO = 0;

@@ -4,52 +4,80 @@ out vec4 FragColor;
 in VS_OUT {
     vec3 FragPos;
     vec2 TexCoords;
-    vec3 Normal;
-    mat3 TBN;
+    vec3 TangentLightPos;
+    vec3 TangentViewPos;
+    vec3 TangentFragPos;
 } fs_in;
 
-uniform sampler2D texture1;
+uniform sampler2D diffuseMap;
 uniform sampler2D normalMap;
-uniform bool hasNormal;
+uniform sampler2D depthMap;
 
-uniform vec3 lightPos;
-uniform vec3 viewPos;
+uniform float height_scale;
+
+vec2 ParallaxMapping(vec2 texCoords, vec3 viewDir)
+{
+    const float minLayers = 8.0;
+    const float maxLayers = 32.0;
+
+    float numLayers = mix(maxLayers, minLayers, max(dot(vec3(0.0, 0.0, 1.0), viewDir), 0.0));
+    float layerDepth = 1.0 / numLayers;
+    float currentLayerDepth = 0.0;
+    
+    vec2 P = viewDir.xy * height_scale;
+    vec2 deltaTexCoords = P / numLayers;
+
+    vec2 currentTexCoords = texCoords;
+    float currentDepthMapValue = texture(depthMap, currentTexCoords).r;
+
+    while (currentLayerDepth < currentDepthMapValue)
+    {
+        currentTexCoords -= deltaTexCoords;
+        currentDepthMapValue = texture(depthMap, currentTexCoords).r;
+        currentLayerDepth += layerDepth;
+    }
+
+    vec2 prevTexCoords = currentTexCoords + deltaTexCoords;
+
+    float afterDepth = currentDepthMapValue - currentLayerDepth;
+    float beforeDepth = texture(depthMap, prevTexCoords).r - currentLayerDepth + layerDepth;
+
+    float weight = afterDepth / (afterDepth - beforeDepth);
+    vec2 finalTexCoords = prevTexCoords * weight + currentTexCoords * (1.0 - weight);
+
+    return currentTexCoords;
+}
 
 vec3 CalcLight()
 {
-    vec3 color = texture(texture1, fs_in.TexCoords).rgb;
-    vec3 lightColor = vec3(1.0);
+    vec3 viewDir = normalize(fs_in.TangentViewPos - fs_in.TangentFragPos);
+    vec2 texCoords = ParallaxMapping(fs_in.TexCoords, viewDir);
 
-    vec3 normal;
-    if (hasNormal)
+    if (texCoords.x > 1.0 || texCoords.y > 1.0 || texCoords.x < 0.0 || texCoords.y < 0.0)
     {
-        normal = texture(normalMap, fs_in.TexCoords).rgb;
-        normal = normal * 2.0 - 1.0;
-        normal = normalize(fs_in.TBN * normal);
-    }
-    else
-    {
-        normal = normalize(fs_in.Normal);
+        discard;
     }
 
+    vec3 normal = texture(normalMap, texCoords).rgb;
+    normal = normalize(normal * 2.0 - 1.0);
+
+    vec3 color = texture(diffuseMap, texCoords).rgb;
 
     // ambient
-    vec3 ambient = 0.15 * lightColor;
+    vec3 ambient = 0.15 * color;
 
     // diffuse
-    vec3 lightDir = normalize(lightPos - fs_in.FragPos);
+    vec3 lightDir = normalize(fs_in.TangentLightPos - fs_in.TangentFragPos);
     float diff = max(dot(lightDir, normal), 0.0);
-    vec3 diffuse = diff * lightColor;
+    vec3 diffuse = diff * color;
 
     // specular
-    vec3 viewDir = normalize(viewPos - fs_in.FragPos);
     float spec = 0.0;
     vec3 halfwayDir = normalize(lightDir + viewDir);
     spec = pow(max(dot(normal, halfwayDir), 0.0), 64.0);
-    vec3 specular = spec * lightColor;
+    vec3 specular = spec * color;
 
-    // calculate shadow
-    vec3 lighting = (ambient + diffuse + specular) * color;
+    vec3 lighting = ambient + diffuse + specular;
 
     return lighting;
 }
